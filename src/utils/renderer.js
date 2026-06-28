@@ -1,98 +1,256 @@
-import { nebulaRGB, nebulaColor } from "./colors";
+import { getPalette, nebulaColor } from "./colors";
 import { project } from "./physics";
 
 export function drawBackground(ctx, w, h, time) {
-  const grad = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w * 0.7);
-  grad.addColorStop(0, "rgba(8,14,28,1)");
-  grad.addColorStop(0.5, "rgba(4,8,18,1)");
-  grad.addColorStop(1, "rgba(2,4,8,1)");
+  // Deep space base
+  const grad = ctx.createRadialGradient(w / 2, h * 0.45, 0, w / 2, h * 0.45, w * 0.8);
+  grad.addColorStop(0, "rgba(12,8,20,1)");
+  grad.addColorStop(0.3, "rgba(8,6,16,1)");
+  grad.addColorStop(0.6, "rgba(4,3,10,1)");
+  grad.addColorStop(1, "rgba(2,2,6,1)");
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
 
-  // Subtle nebula glow
-  const gx = w / 2 + Math.sin(time * 0.003) * 60;
-  const gy = h / 2 + Math.cos(time * 0.004) * 40;
-  const nebGrad = ctx.createRadialGradient(gx, gy, 0, gx, gy, 280);
-  nebGrad.addColorStop(0, "rgba(40,60,120,0.04)");
-  nebGrad.addColorStop(1, "rgba(40,60,120,0)");
-  ctx.fillStyle = nebGrad;
+  // Galaxy spiral glow
+  const gcx = w * 0.5 + Math.sin(time * 0.001) * 20;
+  const gcy = h * 0.42 + Math.cos(time * 0.0013) * 15;
+
+  // Warm core
+  const core = ctx.createRadialGradient(gcx, gcy, 0, gcx, gcy, w * 0.15);
+  core.addColorStop(0, "rgba(255,220,150,0.08)");
+  core.addColorStop(0.5, "rgba(220,160,80,0.04)");
+  core.addColorStop(1, "rgba(200,130,60,0)");
+  ctx.fillStyle = core;
   ctx.fillRect(0, 0, w, h);
+
+  // Spiral arms
+  ctx.save();
+  ctx.translate(gcx, gcy);
+  ctx.rotate(time * 0.0002);
+  for (let arm = 0; arm < 3; arm++) {
+    const armAngle = (arm / 3) * Math.PI * 2;
+    for (let i = 0; i < 60; i++) {
+      const t = i / 60;
+      const spiral = armAngle + t * Math.PI * 2.5;
+      const dist = t * w * 0.4;
+      const x = Math.cos(spiral) * dist;
+      const y = Math.sin(spiral) * dist * 0.35;
+      const size = (1 - t) * 40 + 8;
+      const alpha = (1 - t) * 0.025;
+
+      const nebGrad = ctx.createRadialGradient(x, y, 0, x, y, size);
+      const hue = arm === 0 ? "200,140,60" : arm === 1 ? "80,120,200" : "180,100,160";
+      nebGrad.addColorStop(0, `rgba(${hue},${alpha})`);
+      nebGrad.addColorStop(1, `rgba(${hue},0)`);
+      ctx.fillStyle = nebGrad;
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+
+  // Nebula clouds
+  const clouds = [
+    { x: w * 0.2, y: h * 0.7, r: 150, color: "180,80,40" },
+    { x: w * 0.8, y: h * 0.3, r: 120, color: "60,100,180" },
+    { x: w * 0.6, y: h * 0.8, r: 100, color: "140,60,120" },
+  ];
+  for (const c of clouds) {
+    const cx = c.x + Math.sin(time * 0.002 + c.r) * 10;
+    const cy = c.y + Math.cos(time * 0.0015 + c.r) * 8;
+    const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, c.r);
+    cg.addColorStop(0, `rgba(${c.color},0.035)`);
+    cg.addColorStop(0.6, `rgba(${c.color},0.015)`);
+    cg.addColorStop(1, `rgba(${c.color},0)`);
+    ctx.fillStyle = cg;
+    ctx.fillRect(0, 0, w, h);
+  }
 }
 
 export function drawStars(ctx, stars, time) {
   for (const s of stars) {
     const twinkle = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(time * s.twinkleSpeed + s.twinkleOffset));
+    const alpha = twinkle * 0.6;
+
+    // Star glow
+    if (s.r > 0.8) {
+      const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 4);
+      glow.addColorStop(0, `rgba(255,240,220,${alpha * 0.15})`);
+      glow.addColorStop(1, `rgba(255,240,220,0)`);
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r * 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     ctx.beginPath();
     ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(180,200,240,${twinkle * 0.4})`;
+    ctx.fillStyle = `rgba(220,230,255,${alpha})`;
     ctx.fill();
   }
 }
 
 export function drawEdges(ctx, nodes, edges, w, h) {
-  ctx.lineWidth = 0.5;
+  ctx.lineWidth = 0.6;
   for (const [aId, bId] of edges) {
     const a = nodes.find((n) => n.id === aId);
     const b = nodes.find((n) => n.id === bId);
     if (!a || !b || a.dying || b.dying) continue;
     const pa = project(a, w, h);
     const pb = project(b, w, h);
-    const alpha = Math.min(pa.scale, pb.scale) * 0.12;
+    const alpha = Math.min(pa.scale, pb.scale) * 0.08;
+
+    const grad = ctx.createLinearGradient(pa.sx, pa.sy, pb.sx, pb.sy);
+    const ca = getPalette(a.colorIdx).atmo;
+    const cb = getPalette(b.colorIdx).atmo;
+    grad.addColorStop(0, `rgba(${ca[0]},${ca[1]},${ca[2]},${alpha})`);
+    grad.addColorStop(1, `rgba(${cb[0]},${cb[1]},${cb[2]},${alpha})`);
+
     ctx.beginPath();
     ctx.moveTo(pa.sx, pa.sy);
     ctx.lineTo(pb.sx, pb.sy);
-    ctx.strokeStyle = `rgba(80,120,180,${alpha})`;
+    ctx.strokeStyle = grad;
     ctx.stroke();
   }
 }
 
-export function drawNodes(ctx, nodes, w, h, selectedId) {
+function drawPlanet(ctx, sx, sy, r, pal, node, time) {
+  const { base, hi, shadow, atmo } = pal;
+  const lightX = -0.35;
+  const lightY = -0.35;
+
+  // Atmosphere glow
+  const glowR = r * (node.isPulsing ? 3.2 : 2.0);
+  const atmoGrad = ctx.createRadialGradient(sx, sy, r * 0.8, sx, sy, glowR);
+  atmoGrad.addColorStop(0, `rgba(${atmo[0]},${atmo[1]},${atmo[2]},0.15)`);
+  atmoGrad.addColorStop(0.5, `rgba(${atmo[0]},${atmo[1]},${atmo[2]},0.05)`);
+  atmoGrad.addColorStop(1, `rgba(${atmo[0]},${atmo[1]},${atmo[2]},0)`);
+  ctx.beginPath();
+  ctx.arc(sx, sy, glowR, 0, Math.PI * 2);
+  ctx.fillStyle = atmoGrad;
+  ctx.fill();
+
+  // Planet body — 3D sphere shading
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(sx, sy, r, 0, Math.PI * 2);
+  ctx.clip();
+
+  // Base color
+  const bodyGrad = ctx.createRadialGradient(
+    sx + lightX * r * 0.6, sy + lightY * r * 0.6, r * 0.1,
+    sx - lightX * r * 0.3, sy - lightY * r * 0.3, r * 1.2
+  );
+  bodyGrad.addColorStop(0, `rgb(${hi[0]},${hi[1]},${hi[2]})`);
+  bodyGrad.addColorStop(0.45, `rgb(${base[0]},${base[1]},${base[2]})`);
+  bodyGrad.addColorStop(1, `rgb(${shadow[0]},${shadow[1]},${shadow[2]})`);
+  ctx.fillStyle = bodyGrad;
+  ctx.fillRect(sx - r, sy - r, r * 2, r * 2);
+
+  // Atmospheric bands (Jupiter/Saturn style)
+  if (node.bands && r > 10) {
+    const bandCount = 4 + Math.floor(r / 6);
+    for (let b = 0; b < bandCount; b++) {
+      const by = sy - r + (b / bandCount) * r * 2;
+      const bandAlpha = 0.08 + Math.sin(b * 1.3 + node.rotationOffset) * 0.04;
+      ctx.fillStyle = `rgba(${hi[0]},${hi[1]},${hi[2]},${Math.abs(bandAlpha)})`;
+      ctx.fillRect(sx - r, by, r * 2, r * 2 / bandCount * 0.5);
+    }
+  }
+
+  // Specular highlight
+  const specGrad = ctx.createRadialGradient(
+    sx + lightX * r * 0.5, sy + lightY * r * 0.5, 0,
+    sx + lightX * r * 0.5, sy + lightY * r * 0.5, r * 0.6
+  );
+  specGrad.addColorStop(0, "rgba(255,255,255,0.25)");
+  specGrad.addColorStop(0.5, "rgba(255,255,255,0.05)");
+  specGrad.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = specGrad;
+  ctx.fillRect(sx - r, sy - r, r * 2, r * 2);
+
+  // Terminator (day/night edge)
+  const termGrad = ctx.createLinearGradient(
+    sx - r * 0.2, sy - r, sx + r, sy + r
+  );
+  termGrad.addColorStop(0, "rgba(0,0,0,0)");
+  termGrad.addColorStop(0.6, "rgba(0,0,0,0.15)");
+  termGrad.addColorStop(1, "rgba(0,0,0,0.4)");
+  ctx.fillStyle = termGrad;
+  ctx.fillRect(sx - r, sy - r, r * 2, r * 2);
+
+  ctx.restore();
+
+  // Ring (Saturn-like)
+  if (node.hasRing && r > 8) {
+    ctx.save();
+    ctx.translate(sx, sy);
+    const ringW = r * 2.2;
+    const ringH = r * node.ringTilt;
+
+    ctx.beginPath();
+    ctx.ellipse(0, 0, ringW, ringH, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(${hi[0]},${hi[1]},${hi[2]},0.2)`;
+    ctx.lineWidth = r * 0.15;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.ellipse(0, 0, ringW * 0.85, ringH * 0.85, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(${base[0]},${base[1]},${base[2]},0.12)`;
+    ctx.lineWidth = r * 0.08;
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  // Rim light
+  ctx.beginPath();
+  ctx.arc(sx, sy, r, 0, Math.PI * 2);
+  ctx.strokeStyle = `rgba(${atmo[0]},${atmo[1]},${atmo[2]},0.15)`;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
+export function drawNodes(ctx, nodes, w, h, selectedId, time) {
   const sorted = [...nodes].sort((a, b) => b.z - a.z);
 
   for (const node of sorted) {
     if (node.baseR <= 0) continue;
     const p = project(node, w, h);
     const r = node.baseR * p.scale;
-    const rgb = nebulaRGB(node.colorIdx);
+    const pal = getPalette(node.colorIdx);
     const isSelected = node.id === selectedId;
 
-    let alpha = node.revealed ? 0.25 : 0.6;
+    let alpha = node.revealed ? 0.3 : 1;
     if (node.dying) alpha *= (1 - node.deathPhase);
 
-    // Glow
-    const glowR = r * (node.isPulsing ? 3.5 : 2.2);
-    const glowGrad = ctx.createRadialGradient(p.sx, p.sy, r * 0.3, p.sx, p.sy, glowR);
-    glowGrad.addColorStop(0, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha * 0.35})`);
-    glowGrad.addColorStop(1, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0)`);
-    ctx.beginPath();
-    ctx.arc(p.sx, p.sy, glowR, 0, Math.PI * 2);
-    ctx.fillStyle = glowGrad;
-    ctx.fill();
-
-    // Core
-    const coreGrad = ctx.createRadialGradient(p.sx - r * 0.2, p.sy - r * 0.2, 0, p.sx, p.sy, r);
-    coreGrad.addColorStop(0, `rgba(${Math.min(255, rgb[0] + 80)},${Math.min(255, rgb[1] + 80)},${Math.min(255, rgb[2] + 80)},${alpha})`);
-    coreGrad.addColorStop(1, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha * 0.7})`);
-    ctx.beginPath();
-    ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2);
-    ctx.fillStyle = coreGrad;
-    ctx.fill();
+    ctx.globalAlpha = alpha;
+    drawPlanet(ctx, p.sx, p.sy, r, pal, node, time);
+    ctx.globalAlpha = 1;
 
     // Selection ring
     if (isSelected && node.revealed) {
       ctx.beginPath();
-      ctx.arc(p.sx, p.sy, r + 4, 0, Math.PI * 2);
-      ctx.strokeStyle = nebulaColor(node.colorIdx, 0.4);
-      ctx.lineWidth = 1.5;
+      ctx.arc(p.sx, p.sy, r + 5, 0, Math.PI * 2);
+      ctx.strokeStyle = nebulaColor(node.colorIdx, 0.5);
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
       ctx.stroke();
+      ctx.setLineDash([]);
     }
 
     // Topic label
-    if (!node.revealed && !node.dying && r > 6) {
-      ctx.font = `${Math.max(8, r * 0.65)}px system-ui, sans-serif`;
+    if (!node.revealed && !node.dying && r > 8) {
+      const fontSize = Math.max(9, r * 0.55);
+      ctx.font = `600 ${fontSize}px system-ui, sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillStyle = `rgba(220,230,250,${alpha * 0.8})`;
+
+      ctx.fillStyle = `rgba(0,0,0,0.4)`;
+      ctx.fillText(node.tip.topic, p.sx + 1, p.sy + 1);
+
+      ctx.fillStyle = `rgba(255,250,240,${alpha * 0.9})`;
       ctx.fillText(node.tip.topic, p.sx, p.sy);
     }
   }
@@ -100,9 +258,20 @@ export function drawNodes(ctx, nodes, w, h, selectedId) {
 
 export function drawParticles(ctx, particles) {
   for (const p of particles) {
+    const pr = p.r * p.life;
+    if (pr <= 0) continue;
+
+    const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, pr * 2);
+    glow.addColorStop(0, `rgba(${p.color[0]},${p.color[1]},${p.color[2]},${p.life * 0.6})`);
+    glow.addColorStop(1, `rgba(${p.color[0]},${p.color[1]},${p.color[2]},0)`);
+    ctx.fillStyle = glow;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(${p.color[0]},${p.color[1]},${p.color[2]},${p.life * 0.7})`;
+    ctx.arc(p.x, p.y, pr * 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, pr, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${p.color[0]},${p.color[1]},${p.color[2]},${p.life * 0.8})`;
     ctx.fill();
   }
 }

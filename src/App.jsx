@@ -96,7 +96,7 @@ export default function App() {
       drawBackground(ctx, w, h, timeRef.current);
       drawStars(ctx, starsRef.current, timeRef.current);
       drawEdges(ctx, nodesRef.current, edgesRef.current, w, h);
-      drawNodes(ctx, nodesRef.current, w, h, selected);
+      drawNodes(ctx, nodesRef.current, w, h, selected, timeRef.current);
       drawParticles(ctx, particlesRef.current);
 
       animRef.current = requestAnimationFrame(frame);

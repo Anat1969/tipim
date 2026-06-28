@@ -1,9 +1,11 @@
-import { NEBULA_COLORS } from "./colors";
+import { PLANET_PALETTES } from "./colors";
 
 export function createNode3D(id, tip, w, h, zScale = 1) {
-  const angle = (id / 12) * Math.PI * 2 + Math.random() * 0.5;
-  const maxR = Math.min(w, h) * 0.3;
-  const radius = 30 + Math.random() * maxR;
+  const angle = (id / 8) * Math.PI * 2 + Math.random() * 0.8;
+  const maxR = Math.min(w, h) * 0.28;
+  const radius = 40 + Math.random() * maxR;
+  const hasRing = Math.random() < 0.25;
+  const ringTilt = 0.3 + Math.random() * 0.4;
   return {
     id,
     tip,
@@ -13,13 +15,17 @@ export function createNode3D(id, tip, w, h, zScale = 1) {
     vx: 0,
     vy: 0,
     vz: 0,
-    baseR: 14 + Math.random() * 10,
-    colorIdx: id % NEBULA_COLORS.length,
+    baseR: 18 + Math.random() * 14,
+    colorIdx: id % PLANET_PALETTES.length,
     revealed: false,
     dying: false,
     deathPhase: 0,
     isPulsing: false,
     pulsePhase: 0,
+    hasRing,
+    ringTilt,
+    rotationOffset: Math.random() * Math.PI * 2,
+    bands: Math.random() < 0.5,
   };
 }
 
@@ -41,9 +47,10 @@ export function createStars(count, w, h) {
     stars.push({
       x: Math.random() * w,
       y: Math.random() * h,
-      r: 0.3 + Math.random() * 1.2,
-      twinkleSpeed: 0.01 + Math.random() * 0.03,
+      r: 0.2 + Math.random() * 1.5,
+      twinkleSpeed: 0.008 + Math.random() * 0.025,
       twinkleOffset: Math.random() * Math.PI * 2,
+      hue: Math.random() < 0.3 ? 30 + Math.random() * 30 : 200 + Math.random() * 40,
     });
   }
   return stars;
@@ -59,20 +66,21 @@ export function project(node, w, h) {
 
 export function spawnExplosion(cx, cy, r, colorIdx) {
   const particles = [];
-  const color = NEBULA_COLORS[colorIdx % NEBULA_COLORS.length];
-  const count = 18 + Math.floor(Math.random() * 12);
+  const pal = PLANET_PALETTES[colorIdx % PLANET_PALETTES.length];
+  const count = 24 + Math.floor(Math.random() * 16);
   for (let i = 0; i < count; i++) {
-    const angle = (i / count) * Math.PI * 2 + Math.random() * 0.3;
-    const speed = 1.5 + Math.random() * 3;
+    const angle = (i / count) * Math.PI * 2 + Math.random() * 0.4;
+    const speed = 2 + Math.random() * 4;
+    const useHi = Math.random() < 0.4;
     particles.push({
       x: cx,
       y: cy,
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed,
       life: 1,
-      decay: 0.015 + Math.random() * 0.02,
-      r: 1 + Math.random() * 2.5,
-      color,
+      decay: 0.012 + Math.random() * 0.018,
+      r: 1.5 + Math.random() * 3,
+      color: useHi ? pal.hi : pal.atmo,
     });
   }
   return particles;
@@ -91,27 +99,24 @@ export function stepPhysics(nodes, edges, dragId, w, h) {
     }
     if (node.id === dragId) continue;
 
-    // Center gravity
     node.vx += (cx - node.x) * 0.0006;
     node.vy += (cy - node.y) * 0.0006;
     node.vz += (0 - node.z) * 0.0008;
 
-    // Repulsion between nodes
     for (const other of nodes) {
       if (other.id === node.id || other.dying) continue;
       const dx = node.x - other.x;
       const dy = node.y - other.y;
       const dz = node.z - other.z;
       const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
-      if (dist < 120) {
-        const force = (120 - dist) / dist * 0.015;
+      if (dist < 140) {
+        const force = (140 - dist) / dist * 0.018;
         node.vx += dx * force;
         node.vy += dy * force;
         node.vz += dz * force * 0.3;
       }
     }
 
-    // Edge spring forces
     for (const [a, b] of edges) {
       if (a !== node.id && b !== node.id) continue;
       const other = nodes.find((n) => n.id === (a === node.id ? b : a));
@@ -119,13 +124,12 @@ export function stepPhysics(nodes, edges, dragId, w, h) {
       const dx = other.x - node.x;
       const dy = other.y - node.y;
       const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-      const target = 100;
+      const target = 110;
       const force = (dist - target) / dist * 0.003;
       node.vx += dx * force;
       node.vy += dy * force;
     }
 
-    // Damping
     node.vx *= 0.95;
     node.vy *= 0.95;
     node.vz *= 0.93;
@@ -134,7 +138,6 @@ export function stepPhysics(nodes, edges, dragId, w, h) {
     node.y += node.vy;
     node.z += node.vz;
 
-    // Boundary clamping
     if (node.x < margin) { node.x = margin; node.vx *= -0.3; }
     if (node.x > w - margin) { node.x = w - margin; node.vx *= -0.3; }
     if (node.y < margin) { node.y = margin; node.vy *= -0.3; }
@@ -142,7 +145,6 @@ export function stepPhysics(nodes, edges, dragId, w, h) {
     if (node.z < -250) { node.z = -250; node.vz *= -0.3; }
     if (node.z > 250) { node.z = 250; node.vz *= -0.3; }
 
-    // Pulse decay
     if (node.isPulsing) {
       node.pulsePhase += 0.05;
       if (node.pulsePhase > 1) node.isPulsing = false;
