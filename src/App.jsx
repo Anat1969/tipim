@@ -42,7 +42,7 @@ export default function App() {
   const [viewMode, setViewMode] = useState("preset");
   const supabaseLoaded = useRef(false);
 
-  const allTips = viewMode === "personal" ? personalTips : [...presetTips, ...personalTips];
+  const allTips = viewMode === "personal" ? personalTips : presetTips;
 
   const init = useCallback((tipsList, w, h) => {
     nodesRef.current = tipsList.map((t, i) => createNode3D(i, t, w, h));
@@ -259,7 +259,7 @@ export default function App() {
   };
 
   const handleReset = () => {
-    const tips = viewMode === "personal" ? personalTips : [...presetTips, ...personalTips];
+    const tips = viewMode === "personal" ? personalTips : presetTips;
     init(tips, dims.w, dims.h);
     setSelected(null);
     updateStats();
@@ -271,8 +271,7 @@ export default function App() {
     if (newMode === "personal") {
       init(personalTips, dims.w, dims.h);
     } else {
-      const all = [...presetTips, ...personalTips];
-      init(all, dims.w, dims.h);
+      init(presetTips, dims.w, dims.h);
     }
     updateStats();
   };
@@ -329,6 +328,7 @@ export default function App() {
         presetsLoaded={presetsLoaded}
         activeMode={viewMode}
         onModeChange={handleModeChange}
+        personalTips={personalTips}
       />
     </div>
   );

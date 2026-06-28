@@ -23,7 +23,7 @@ const btnBase = {
   border: "none",
 };
 
-export default function AddTipForm({ onAdd, onAddPreset, onLoadPresets, totalCount, presetsLoaded, activeMode, onModeChange }) {
+export default function AddTipForm({ onAdd, onAddPreset, onLoadPresets, totalCount, presetsLoaded, activeMode, onModeChange, personalTips }) {
   const mode = activeMode || "preset";
   const setMode = (m) => { if (onModeChange) onModeChange(m); };
   const [topic, setTopic] = useState("");
@@ -171,6 +171,10 @@ export default function AddTipForm({ onAdd, onAddPreset, onLoadPresets, totalCou
               הוסף
             </button>
           </div>
+
+          {personalTips && personalTips.length > 0 && (
+            <PersonalTipsList tips={personalTips} />
+          )}
         </div>
       )}
 
@@ -341,6 +345,102 @@ function PresetPanel({ onAdd, onLoadAll, presetsLoaded }) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function PersonalTipsList({ tips }) {
+  const grouped = {};
+  for (const tip of tips) {
+    const cat = tip.category || tip.topic || "כללי";
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(tip);
+  }
+  const categories = Object.keys(grouped);
+  if (categories.length === 0) return null;
+
+  return (
+    <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+      {categories.map((cat) => {
+        const palIdx = CATEGORY_COLOR_MAP[cat];
+        const pal = palIdx !== undefined ? PLANET_PALETTES[palIdx] : PLANET_PALETTES[2];
+        const catColor = `rgba(${pal.base[0]},${pal.base[1]},${pal.base[2]}`;
+        return (
+          <div key={cat} style={{
+            background: "rgba(15,20,35,0.6)",
+            border: `1px solid ${catColor},0.2)`,
+            borderRadius: 10,
+            padding: 10,
+          }}>
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginBottom: 6,
+              paddingBottom: 6,
+              borderBottom: `1px solid ${catColor},0.1)`,
+            }}>
+              <span style={{
+                width: 8, height: 8, borderRadius: "50%",
+                background: `${catColor},0.7)`,
+                boxShadow: `0 0 6px ${catColor},0.4)`,
+                display: "inline-block",
+                flexShrink: 0,
+              }} />
+              <span style={{
+                fontSize: 12,
+                color: `${catColor},0.85)`,
+                fontWeight: 600,
+              }}>
+                {cat}
+              </span>
+              <span style={{ fontSize: 10, color: "rgba(130,150,180,0.4)", marginRight: "auto" }}>
+                {grouped[cat].length}
+              </span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {grouped[cat].map((tip, i) => (
+                <div key={i} style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "5px 8px",
+                  borderRadius: 6,
+                  background: "rgba(20,28,45,0.5)",
+                  border: "1px solid rgba(80,110,160,0.08)",
+                }}>
+                  <span style={{
+                    fontSize: 10,
+                    padding: "1px 6px",
+                    borderRadius: 3,
+                    background: tip.source === "A" ? "rgba(220,130,70,0.15)" : "rgba(80,160,220,0.15)",
+                    color: tip.source === "A" ? "rgba(240,170,100,0.8)" : "rgba(130,200,250,0.8)",
+                    flexShrink: 0,
+                  }}>
+                    {tip.source}
+                  </span>
+                  <span style={{
+                    fontSize: 11,
+                    color: "rgba(180,200,230,0.7)",
+                    fontWeight: 600,
+                    flexShrink: 0,
+                    minWidth: 40,
+                  }}>
+                    {tip.topic}
+                  </span>
+                  <span style={{
+                    fontSize: 11,
+                    color: "rgba(160,180,210,0.5)",
+                    flex: 1,
+                  }}>
+                    {tip.text}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
