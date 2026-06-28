@@ -31,11 +31,27 @@ export function createNode3D(id, tip, w, h, zScale = 1) {
 
 export function buildEdges(nodes) {
   const edges = [];
-  for (let i = 0; i < nodes.length; i++) {
-    const count = 1 + Math.floor(Math.random() * 2);
-    for (let c = 0; c < count; c++) {
-      let j = (i + 1 + Math.floor(Math.random() * 3)) % nodes.length;
-      if (j !== i) edges.push([nodes[i].id, nodes[j].id]);
+  const byCategory = {};
+  for (const n of nodes) {
+    const cat = n.tip.category || n.tip.topic;
+    if (!byCategory[cat]) byCategory[cat] = [];
+    byCategory[cat].push(n);
+  }
+  for (const cat in byCategory) {
+    const group = byCategory[cat];
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        edges.push([group[i].id, group[j].id]);
+      }
+    }
+  }
+  const cats = Object.keys(byCategory);
+  for (let i = 0; i < cats.length; i++) {
+    const next = (i + 1) % cats.length;
+    const a = byCategory[cats[i]];
+    const b = byCategory[cats[next]];
+    if (a.length && b.length) {
+      edges.push([a[0].id, b[0].id]);
     }
   }
   return edges;

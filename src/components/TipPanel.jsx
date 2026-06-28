@@ -30,14 +30,26 @@ export default function TipPanel({ node, revealProgress }) {
         alignItems: "center",
         marginBottom: 8,
       }}>
-        <span style={{
-          fontSize: 13,
-          fontWeight: 600,
-          color: "rgba(180,200,240,0.9)",
-          letterSpacing: "0.03em",
-        }}>
-          {tip.topic}
-        </span>
+        <div>
+          <span style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: "rgba(180,200,240,0.9)",
+            letterSpacing: "0.03em",
+          }}>
+            {tip.topic}
+          </span>
+          {tip.category && (
+            <span style={{
+              fontSize: 9,
+              color: "rgba(140,160,190,0.45)",
+              marginRight: 8,
+              letterSpacing: "0.04em",
+            }}>
+              {tip.category}
+            </span>
+          )}
+        </div>
         <span style={{
           fontSize: 10,
           padding: "2px 8px",

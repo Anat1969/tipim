@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { INITIAL_TIPS } from "./data/initialTips";
+import { INITIAL_TIPS, PRESET_TIPS } from "./data/initialTips";
 import {
   createNode3D,
   buildEdges,
@@ -36,13 +36,13 @@ export default function App() {
   const [revealProgress, setRevealProgress] = useState(0);
   const [dims, setDims] = useState({ w: 800, h: 520 });
   const [stats, setStats] = useState({ total: 0, revealed: 0 });
+  const [presetsLoaded, setPresetsLoaded] = useState(false);
 
-  // ── Init ──
   const init = useCallback((tipsList, w, h) => {
     nodesRef.current = tipsList.map((t, i) => createNode3D(i, t, w, h));
     edgesRef.current = buildEdges(nodesRef.current);
     particlesRef.current = [];
-    starsRef.current = createStars(220, w, h);
+    starsRef.current = createStars(280, w, h);
   }, []);
 
   const updateStats = useCallback(() => {
@@ -72,7 +72,6 @@ export default function App() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // ── Render loop ──
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -106,7 +105,6 @@ export default function App() {
     return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
   }, [dims, selected]);
 
-  // ── Interaction helpers ──
   const getNodeAt = (mx, my) => {
     const { w, h } = dims;
     const candidates = [...nodesRef.current]
@@ -149,7 +147,6 @@ export default function App() {
     });
   };
 
-  // ── Mouse / touch ──
   const onDown = (e) => {
     const { x, y } = getXY(e);
     const node = getNodeAt(x, y);
@@ -201,20 +198,41 @@ export default function App() {
     dragRef.current = null;
   };
 
-  // ── Actions ──
-  const handleAddTip = (newTip) => {
-    const updated = [...tips, newTip];
-    setTips(updated);
+  const addTipToScene = (newTip) => {
     const n = createNode3D(nodesRef.current.length, newTip, dims.w, dims.h, 0.5);
     nodesRef.current.push(n);
-    if (nodesRef.current.length > 1) {
-      const alive = nodesRef.current.filter((nd) => !nd.dying);
-      if (alive.length > 1) {
-        const target = alive[Math.floor(Math.random() * (alive.length - 1))].id;
-        edgesRef.current.push([n.id, target]);
+    // Connect to same-category nodes
+    const sameCategory = nodesRef.current.filter(
+      (nd) => !nd.dying && nd.id !== n.id && nd.tip.category === newTip.category
+    );
+    for (const other of sameCategory) {
+      edgesRef.current.push([n.id, other.id]);
+    }
+    if (sameCategory.length === 0 && nodesRef.current.length > 1) {
+      const alive = nodesRef.current.filter((nd) => !nd.dying && nd.id !== n.id);
+      if (alive.length > 0) {
+        const target = alive[Math.floor(Math.random() * alive.length)];
+        edgesRef.current.push([n.id, target.id]);
       }
     }
     triggerExplosion(n);
+  };
+
+  const handleAddTip = (newTip) => {
+    const updated = [...tips, newTip];
+    setTips(updated);
+    addTipToScene(newTip);
+    updateStats();
+  };
+
+  const handleLoadPresets = () => {
+    if (presetsLoaded) return;
+    const updated = [...tips, ...PRESET_TIPS];
+    setTips(updated);
+    for (const tip of PRESET_TIPS) {
+      addTipToScene(tip);
+    }
+    setPresetsLoaded(true);
     updateStats();
   };
 
@@ -239,6 +257,7 @@ export default function App() {
     setTips(data);
     init(data, dims.w, dims.h);
     setSelected(null);
+    setPresetsLoaded(false);
     updateStats();
   };
 
@@ -288,7 +307,12 @@ export default function App() {
         </div>
       </div>
 
-      <AddTipForm onAdd={handleAddTip} totalCount={stats.total} />
+      <AddTipForm
+        onAdd={handleAddTip}
+        onLoadPresets={handleLoadPresets}
+        totalCount={stats.total}
+        presetsLoaded={presetsLoaded}
+      />
     </div>
   );
 }
