@@ -23,8 +23,9 @@ const btnBase = {
   border: "none",
 };
 
-export default function AddTipForm({ onAdd, onAddPreset, onLoadPresets, totalCount, presetsLoaded }) {
-  const [mode, setMode] = useState("preset");
+export default function AddTipForm({ onAdd, onAddPreset, onLoadPresets, totalCount, presetsLoaded, activeMode, onModeChange }) {
+  const mode = activeMode || "preset";
+  const setMode = (m) => { if (onModeChange) onModeChange(m); };
   const [topic, setTopic] = useState("");
   const [text, setText] = useState("");
   const [source, setSource] = useState("I");
@@ -73,7 +74,7 @@ export default function AddTipForm({ onAdd, onAddPreset, onLoadPresets, totalCou
             borderRadius: "0 8px 8px 0",
           }}
         >
-          טיפ אישי
+          אישיים
         </button>
       </div>
 

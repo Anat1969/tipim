@@ -1,5 +1,3 @@
-import { useRef } from "react";
-
 const btnStyle = {
   background: "rgba(60,80,120,0.15)",
   border: "1px solid rgba(100,140,200,0.2)",
@@ -11,27 +9,14 @@ const btnStyle = {
   fontFamily: "inherit",
   transition: "all 0.2s",
   letterSpacing: "0.03em",
+  textDecoration: "none",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
 };
 
-export default function Header({ stats, onSave, onLoad, onReset }) {
-  const fileInputRef = useRef(null);
+export default function Header({ stats, onReset }) {
   const allRevealed = stats.revealed >= stats.total && stats.total > 0;
-
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const data = JSON.parse(ev.target.result);
-        if (Array.isArray(data) && data.length > 0 && data[0].topic) {
-          onLoad(data);
-        }
-      } catch (err) { /* ignore bad files */ }
-    };
-    reader.readAsText(file);
-    e.target.value = "";
-  };
 
   return (
     <div style={{
@@ -65,20 +50,23 @@ export default function Header({ stats, onSave, onLoad, onReset }) {
         </p>
       </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button onClick={onSave} style={btnStyle}>שמור</button>
-        <button onClick={() => fileInputRef.current?.click()} style={btnStyle}>טען</button>
+        <a
+          href="https://claude.ai/code/session_01AVn5pdqL4PojzRwRkaQpKJ"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            ...btnStyle,
+            borderColor: "rgba(130,100,220,0.25)",
+            color: "rgba(170,150,240,0.8)",
+          }}
+        >
+          Claude ✦
+        </a>
         <button onClick={onReset} style={{
           ...btnStyle,
           borderColor: "rgba(100,200,180,0.25)",
           color: "rgba(100,200,180,0.7)",
         }}>אפס</button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json"
-          onChange={handleFileChange}
-          style={{ display: "none" }}
-        />
       </div>
     </div>
   );

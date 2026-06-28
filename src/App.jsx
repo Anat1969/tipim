@@ -16,7 +16,7 @@ import {
   drawNodes,
   drawParticles,
 } from "./utils/renderer";
-import { loadPersonalTips, savePersonalTip, clearPersonalTips } from "./utils/supabase";
+import { loadPersonalTips, savePersonalTip } from "./utils/supabase";
 import Header from "./components/Header";
 import TipPanel from "./components/TipPanel";
 import AddTipForm from "./components/AddTipForm";
@@ -39,9 +39,10 @@ export default function App() {
   const [dims, setDims] = useState({ w: 800, h: 520 });
   const [stats, setStats] = useState({ total: 0, revealed: 0 });
   const [presetsLoaded, setPresetsLoaded] = useState(false);
+  const [viewMode, setViewMode] = useState("preset");
   const supabaseLoaded = useRef(false);
 
-  const allTips = [...presetTips, ...personalTips];
+  const allTips = viewMode === "personal" ? personalTips : [...presetTips, ...personalTips];
 
   const init = useCallback((tipsList, w, h) => {
     nodesRef.current = tipsList.map((t, i) => createNode3D(i, t, w, h));
@@ -78,11 +79,6 @@ export default function App() {
       loadPersonalTips().then((tips) => {
         if (tips && tips.length > 0) {
           setPersonalTips(tips);
-          const { w: cw, h: ch } = measure();
-          const combined = [...presetTips, ...tips];
-          nodesRef.current = combined.map((t, i) => createNode3D(i, t, cw, ch));
-          edgesRef.current = buildEdges(nodesRef.current);
-          updateStats();
         }
       });
     }
@@ -263,32 +259,21 @@ export default function App() {
   };
 
   const handleReset = () => {
-    const all = [...presetTips, ...personalTips];
-    init(all, dims.w, dims.h);
+    const tips = viewMode === "personal" ? personalTips : [...presetTips, ...personalTips];
+    init(tips, dims.w, dims.h);
     setSelected(null);
     updateStats();
   };
 
-  const handleSave = () => {
-    const data = JSON.stringify(personalTips, null, 2);
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "molecular-tips.json";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleLoad = async (data) => {
-    setPersonalTips(data);
-    await clearPersonalTips();
-    for (const tip of data) {
-      await savePersonalTip(tip);
-    }
-    const all = [...presetTips, ...data];
-    init(all, dims.w, dims.h);
+  const handleModeChange = (newMode) => {
+    setViewMode(newMode);
     setSelected(null);
+    if (newMode === "personal") {
+      init(personalTips, dims.w, dims.h);
+    } else {
+      const all = [...presetTips, ...personalTips];
+      init(all, dims.w, dims.h);
+    }
     updateStats();
   };
 
@@ -311,8 +296,6 @@ export default function App() {
     >
       <Header
         stats={stats}
-        onSave={handleSave}
-        onLoad={handleLoad}
         onReset={handleReset}
       />
 
@@ -344,6 +327,8 @@ export default function App() {
         onLoadPresets={handleLoadPresets}
         totalCount={stats.total}
         presetsLoaded={presetsLoaded}
+        activeMode={viewMode}
+        onModeChange={handleModeChange}
       />
     </div>
   );
