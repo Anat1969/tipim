@@ -2,13 +2,14 @@ import { NEBULA_COLORS } from "./colors";
 
 export function createNode3D(id, tip, w, h, zScale = 1) {
   const angle = (id / 12) * Math.PI * 2 + Math.random() * 0.5;
-  const radius = 80 + Math.random() * 160;
+  const maxR = Math.min(w, h) * 0.3;
+  const radius = 30 + Math.random() * maxR;
   return {
     id,
     tip,
-    x: w / 2 + Math.cos(angle) * radius * (0.5 + Math.random() * 0.5),
-    y: h / 2 + Math.sin(angle) * radius * (0.3 + Math.random() * 0.5),
-    z: (Math.random() - 0.5) * 300 * zScale,
+    x: w / 2 + Math.cos(angle) * radius * (0.3 + Math.random() * 0.4),
+    y: h / 2 + Math.sin(angle) * radius * (0.3 + Math.random() * 0.4),
+    z: (Math.random() - 0.5) * 200 * zScale,
     vx: 0,
     vy: 0,
     vz: 0,
@@ -77,8 +78,9 @@ export function spawnExplosion(cx, cy, r, colorIdx) {
   return particles;
 }
 
-export function stepPhysics(nodes, edges, dragId) {
-  const cx = 460, cy = 260;
+export function stepPhysics(nodes, edges, dragId, w, h) {
+  const cx = w / 2, cy = h / 2;
+  const margin = 30;
 
   for (const node of nodes) {
     if (node.dying) {
@@ -90,9 +92,9 @@ export function stepPhysics(nodes, edges, dragId) {
     if (node.id === dragId) continue;
 
     // Center gravity
-    node.vx += (cx - node.x) * 0.0003;
-    node.vy += (cy - node.y) * 0.0003;
-    node.vz += (0 - node.z) * 0.0005;
+    node.vx += (cx - node.x) * 0.0006;
+    node.vy += (cy - node.y) * 0.0006;
+    node.vz += (0 - node.z) * 0.0008;
 
     // Repulsion between nodes
     for (const other of nodes) {
@@ -131,6 +133,14 @@ export function stepPhysics(nodes, edges, dragId) {
     node.x += node.vx;
     node.y += node.vy;
     node.z += node.vz;
+
+    // Boundary clamping
+    if (node.x < margin) { node.x = margin; node.vx *= -0.3; }
+    if (node.x > w - margin) { node.x = w - margin; node.vx *= -0.3; }
+    if (node.y < margin) { node.y = margin; node.vy *= -0.3; }
+    if (node.y > h - margin) { node.y = h - margin; node.vy *= -0.3; }
+    if (node.z < -250) { node.z = -250; node.vz *= -0.3; }
+    if (node.z > 250) { node.z = 250; node.vz *= -0.3; }
 
     // Pulse decay
     if (node.isPulsing) {
