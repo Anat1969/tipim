@@ -146,12 +146,13 @@ export function drawEdges(ctx, nodes, edges, w, h) {
 }
 
 function hash(n) {
-  let h = n * 2654435761;
-  h = ((h >>> 16) ^ h) * 0x45d9f3b;
-  return ((h >>> 16) ^ h) / 4294967296;
+  let h = Math.abs(n * 2654435761 | 0);
+  h = ((h >>> 16) ^ h) * 0x45d9f3b | 0;
+  return Math.abs(((h >>> 16) ^ h)) / 4294967296;
 }
 
 function drawPlanet(ctx, sx, sy, r, pal, node, time) {
+  if (r < 1) return;
   const { base, hi, shadow, atmo } = pal;
 
   const lightAngle = time * 0.003 + node.rotationOffset;
@@ -159,8 +160,8 @@ function drawPlanet(ctx, sx, sy, r, pal, node, time) {
   const lightY = -0.4 + Math.cos(lightAngle * 0.7) * 0.06;
 
   // Outer atmosphere halo with fresnel-like falloff
-  const glowR = r * (node.isPulsing ? 3.5 : 2.4);
-  const atmoGrad = ctx.createRadialGradient(sx, sy, r * 0.85, sx, sy, glowR);
+  const glowR = Math.max(r * (node.isPulsing ? 3.5 : 2.4), 2);
+  const atmoGrad = ctx.createRadialGradient(sx, sy, Math.max(0, r * 0.85), sx, sy, glowR);
   atmoGrad.addColorStop(0, `rgba(${atmo[0]},${atmo[1]},${atmo[2]},0.18)`);
   atmoGrad.addColorStop(0.3, `rgba(${atmo[0]},${atmo[1]},${atmo[2]},0.08)`);
   atmoGrad.addColorStop(0.6, `rgba(${atmo[0]},${atmo[1]},${atmo[2]},0.02)`);
@@ -174,8 +175,8 @@ function drawPlanet(ctx, sx, sy, r, pal, node, time) {
   if (r > 6) {
     const shadowOff = r * 0.15;
     const shadowGrad = ctx.createRadialGradient(
-      sx + shadowOff, sy + shadowOff, r * 0.5,
-      sx + shadowOff, sy + shadowOff, r * 1.8
+      sx + shadowOff, sy + shadowOff, Math.max(0, r * 0.5),
+      sx + shadowOff, sy + shadowOff, Math.max(1, r * 1.8)
     );
     shadowGrad.addColorStop(0, "rgba(0,0,0,0.2)");
     shadowGrad.addColorStop(1, "rgba(0,0,0,0)");
@@ -190,10 +191,9 @@ function drawPlanet(ctx, sx, sy, r, pal, node, time) {
   ctx.arc(sx, sy, r, 0, Math.PI * 2);
   ctx.clip();
 
-  // Multi-stop radial for realistic sphere illumination
   const bodyGrad = ctx.createRadialGradient(
-    sx + lightX * r * 0.7, sy + lightY * r * 0.7, r * 0.05,
-    sx - lightX * r * 0.4, sy - lightY * r * 0.4, r * 1.3
+    sx + lightX * r * 0.7, sy + lightY * r * 0.7, Math.max(0, r * 0.05),
+    sx - lightX * r * 0.4, sy - lightY * r * 0.4, Math.max(1, r * 1.3)
   );
   bodyGrad.addColorStop(0, `rgb(${Math.min(255, hi[0] + 40)},${Math.min(255, hi[1] + 40)},${Math.min(255, hi[2] + 40)})`);
   bodyGrad.addColorStop(0.2, `rgb(${hi[0]},${hi[1]},${hi[2]})`);
@@ -241,7 +241,7 @@ function drawPlanet(ctx, sx, sy, r, pal, node, time) {
   // Primary specular highlight (sharp, bright)
   const specCx = sx + lightX * r * 0.5;
   const specCy = sy + lightY * r * 0.5;
-  const specGrad = ctx.createRadialGradient(specCx, specCy, 0, specCx, specCy, r * 0.35);
+  const specGrad = ctx.createRadialGradient(specCx, specCy, 0, specCx, specCy, Math.max(1, r * 0.35));
   specGrad.addColorStop(0, "rgba(255,255,255,0.45)");
   specGrad.addColorStop(0.3, "rgba(255,255,255,0.15)");
   specGrad.addColorStop(0.7, "rgba(255,255,255,0.03)");
@@ -252,7 +252,7 @@ function drawPlanet(ctx, sx, sy, r, pal, node, time) {
   // Secondary specular (broader, softer)
   const spec2Grad = ctx.createRadialGradient(
     sx + lightX * r * 0.35, sy + lightY * r * 0.35, 0,
-    sx + lightX * r * 0.35, sy + lightY * r * 0.35, r * 0.7
+    sx + lightX * r * 0.35, sy + lightY * r * 0.35, Math.max(1, r * 0.7)
   );
   spec2Grad.addColorStop(0, "rgba(255,255,255,0.08)");
   spec2Grad.addColorStop(1, "rgba(255,255,255,0)");
@@ -273,7 +273,7 @@ function drawPlanet(ctx, sx, sy, r, pal, node, time) {
   ctx.fillRect(sx - r, sy - r, r * 2, r * 2);
 
   // Fresnel rim light on the dark side
-  const rimGrad = ctx.createRadialGradient(sx, sy, r * 0.8, sx, sy, r);
+  const rimGrad = ctx.createRadialGradient(sx, sy, Math.max(0, r * 0.8), sx, sy, Math.max(1, r));
   rimGrad.addColorStop(0, "rgba(0,0,0,0)");
   rimGrad.addColorStop(0.7, "rgba(0,0,0,0)");
   rimGrad.addColorStop(1, `rgba(${atmo[0]},${atmo[1]},${atmo[2]},0.2)`);
@@ -331,9 +331,9 @@ export function drawNodes(ctx, nodes, w, h, selectedId, time) {
   const sorted = [...nodes].sort((a, b) => b.z - a.z);
 
   for (const node of sorted) {
-    if (node.baseR <= 0) continue;
+    if (node.baseR < 1) continue;
     const p = project(node, w, h);
-    const r = node.baseR * p.scale;
+    const r = Math.max(1, node.baseR * p.scale);
     const pal = getPalette(node.colorIdx);
     const isSelected = node.id === selectedId;
 
