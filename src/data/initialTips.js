@@ -42,4 +42,12 @@ export const CATEGORIES = [
   "שיטת עבודה",
 ];
 
+export const CATEGORY_COLOR_MAP = {
+  "ליבה פילוסופית": 0,
+  "בשלות מקצועית": 1,
+  "מצבי עבודה": 3,
+  "פרומפטינג": 4,
+  "שיטת עבודה": 5,
+};
+
 export const INITIAL_TIPS = [];

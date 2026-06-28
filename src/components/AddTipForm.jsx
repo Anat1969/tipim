@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { PRESET_TIPS, CATEGORIES } from "../data/initialTips";
+import { PRESET_TIPS, CATEGORIES, CATEGORY_COLOR_MAP } from "../data/initialTips";
+import { PLANET_PALETTES } from "../utils/colors";
 
 const inputStyle = {
   background: "transparent",
@@ -22,7 +23,7 @@ const btnBase = {
   border: "none",
 };
 
-export default function AddTipForm({ onAdd, onLoadPresets, totalCount, presetsLoaded }) {
+export default function AddTipForm({ onAdd, onAddPreset, onLoadPresets, totalCount, presetsLoaded }) {
   const [mode, setMode] = useState("preset");
   const [topic, setTopic] = useState("");
   const [text, setText] = useState("");
@@ -77,7 +78,7 @@ export default function AddTipForm({ onAdd, onLoadPresets, totalCount, presetsLo
       </div>
 
       {mode === "preset" ? (
-        <PresetPanel onAdd={onAdd} onLoadAll={onLoadPresets} presetsLoaded={presetsLoaded} />
+        <PresetPanel onAdd={onAddPreset} onLoadAll={onLoadPresets} presetsLoaded={presetsLoaded} />
       ) : (
         <div>
           <div style={{
@@ -233,6 +234,9 @@ function PresetPanel({ onAdd, onLoadAll, presetsLoaded }) {
         {CATEGORIES.map((cat) => {
           const tips = PRESET_TIPS.filter((t) => t.category === cat);
           const isExpanded = expandedCat === cat;
+          const palIdx = CATEGORY_COLOR_MAP[cat] ?? 0;
+          const pal = PLANET_PALETTES[palIdx];
+          const catColor = `rgba(${pal.base[0]},${pal.base[1]},${pal.base[2]}`;
           return (
             <div key={cat} style={{ width: "100%" }}>
               <button
@@ -242,16 +246,24 @@ function PresetPanel({ onAdd, onLoadAll, presetsLoaded }) {
                   width: "100%",
                   textAlign: "right",
                   padding: "8px 14px",
-                  background: isExpanded ? "rgba(220,130,70,0.1)" : "rgba(30,40,60,0.3)",
-                  border: "1px solid rgba(220,130,70,0.12)",
-                  color: isExpanded ? "rgba(240,170,100,0.85)" : "rgba(180,200,230,0.6)",
+                  background: isExpanded ? `${catColor},0.12)` : "rgba(30,40,60,0.3)",
+                  border: `1px solid ${catColor},${isExpanded ? 0.25 : 0.12})`,
+                  color: isExpanded ? `${catColor},0.9)` : "rgba(180,200,230,0.6)",
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
                   borderRadius: isExpanded ? "8px 8px 0 0" : 8,
                 }}
               >
-                <span>{cat}</span>
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{
+                    width: 8, height: 8, borderRadius: "50%",
+                    background: `${catColor},0.7)`,
+                    boxShadow: `0 0 6px ${catColor},0.4)`,
+                    display: "inline-block",
+                  }} />
+                  {cat}
+                </span>
                 <span style={{ fontSize: 11, opacity: 0.5 }}>
                   {tips.length} טיפים {isExpanded ? "▲" : "▼"}
                 </span>

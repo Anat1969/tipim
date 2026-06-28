@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { INITIAL_TIPS, PRESET_TIPS } from "./data/initialTips";
+import { PRESET_TIPS } from "./data/initialTips";
 import {
   createNode3D,
   buildEdges,
@@ -31,12 +31,24 @@ export default function App() {
   const dragRef = useRef(null);
   const timeRef = useRef(0);
 
-  const [tips, setTips] = useState(INITIAL_TIPS);
+  const [personalTips, setPersonalTips] = useState(() => {
+    try {
+      const saved = localStorage.getItem("tipim-personal");
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+  const [presetTips, setPresetTips] = useState([]);
   const [selected, setSelected] = useState(null);
   const [revealProgress, setRevealProgress] = useState(0);
   const [dims, setDims] = useState({ w: 800, h: 520 });
   const [stats, setStats] = useState({ total: 0, revealed: 0 });
   const [presetsLoaded, setPresetsLoaded] = useState(false);
+
+  const allTips = [...presetTips, ...personalTips];
+
+  const savePersonal = useCallback((tips) => {
+    try { localStorage.setItem("tipim-personal", JSON.stringify(tips)); } catch {}
+  }, []);
 
   const init = useCallback((tipsList, w, h) => {
     nodesRef.current = tipsList.map((t, i) => createNode3D(i, t, w, h));
@@ -65,7 +77,7 @@ export default function App() {
       return { w: 800, h: 520 };
     };
     const { w, h } = measure();
-    init(tips, w, h);
+    init(allTips, w, h);
     updateStats();
     const onResize = () => measure();
     window.addEventListener("resize", onResize);
@@ -219,16 +231,22 @@ export default function App() {
   };
 
   const handleAddTip = (newTip) => {
-    const updated = [...tips, newTip];
-    setTips(updated);
+    const updated = [...personalTips, newTip];
+    setPersonalTips(updated);
+    savePersonal(updated);
     addTipToScene(newTip);
+    updateStats();
+  };
+
+  const handleAddPresetTip = (tip) => {
+    setPresetTips((prev) => [...prev, tip]);
+    addTipToScene(tip);
     updateStats();
   };
 
   const handleLoadPresets = () => {
     if (presetsLoaded) return;
-    const updated = [...tips, ...PRESET_TIPS];
-    setTips(updated);
+    setPresetTips(PRESET_TIPS);
     for (const tip of PRESET_TIPS) {
       addTipToScene(tip);
     }
@@ -237,13 +255,14 @@ export default function App() {
   };
 
   const handleReset = () => {
-    init(tips, dims.w, dims.h);
+    const all = [...presetTips, ...personalTips];
+    init(all, dims.w, dims.h);
     setSelected(null);
     updateStats();
   };
 
   const handleSave = () => {
-    const data = JSON.stringify(tips, null, 2);
+    const data = JSON.stringify(personalTips, null, 2);
     const blob = new Blob([data], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -254,10 +273,11 @@ export default function App() {
   };
 
   const handleLoad = (data) => {
-    setTips(data);
-    init(data, dims.w, dims.h);
+    setPersonalTips(data);
+    savePersonal(data);
+    const all = [...presetTips, ...data];
+    init(all, dims.w, dims.h);
     setSelected(null);
-    setPresetsLoaded(false);
     updateStats();
   };
 
@@ -309,6 +329,7 @@ export default function App() {
 
       <AddTipForm
         onAdd={handleAddTip}
+        onAddPreset={handleAddPresetTip}
         onLoadPresets={handleLoadPresets}
         totalCount={stats.total}
         presetsLoaded={presetsLoaded}

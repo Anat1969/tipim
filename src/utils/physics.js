@@ -1,22 +1,31 @@
 import { PLANET_PALETTES } from "./colors";
+import { CATEGORY_COLOR_MAP, CATEGORIES } from "../data/initialTips";
 
 export function createNode3D(id, tip, w, h, zScale = 1) {
-  const angle = (id / 8) * Math.PI * 2 + Math.random() * 0.8;
-  const maxR = Math.min(w, h) * 0.28;
-  const radius = 40 + Math.random() * maxR;
+  const catIdx = CATEGORIES.indexOf(tip.category);
+  const catAngle = catIdx >= 0
+    ? (catIdx / CATEGORIES.length) * Math.PI * 2 - Math.PI / 2
+    : (id / 8) * Math.PI * 2;
+  const clusterSpread = Math.min(w, h) * 0.12;
+  const clusterDist = Math.min(w, h) * 0.2;
+  const cx = w / 2 + Math.cos(catAngle) * clusterDist;
+  const cy = h / 2 + Math.sin(catAngle) * clusterDist;
+  const angle = Math.random() * Math.PI * 2;
+  const radius = 10 + Math.random() * clusterSpread;
   const hasRing = Math.random() < 0.25;
   const ringTilt = 0.3 + Math.random() * 0.4;
+  const colorIdx = CATEGORY_COLOR_MAP[tip.category] ?? (id % PLANET_PALETTES.length);
   return {
     id,
     tip,
-    x: w / 2 + Math.cos(angle) * radius * (0.3 + Math.random() * 0.4),
-    y: h / 2 + Math.sin(angle) * radius * (0.3 + Math.random() * 0.4),
+    x: cx + Math.cos(angle) * radius,
+    y: cy + Math.sin(angle) * radius,
     z: (Math.random() - 0.5) * 200 * zScale,
     vx: 0,
     vy: 0,
     vz: 0,
     baseR: 18 + Math.random() * 14,
-    colorIdx: id % PLANET_PALETTES.length,
+    colorIdx,
     revealed: false,
     dying: false,
     deathPhase: 0,
@@ -125,11 +134,28 @@ export function stepPhysics(nodes, edges, dragId, w, h) {
       const dy = node.y - other.y;
       const dz = node.z - other.z;
       const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
-      if (dist < 140) {
-        const force = (140 - dist) / dist * 0.018;
-        node.vx += dx * force;
-        node.vy += dy * force;
-        node.vz += dz * force * 0.3;
+      const sameCat = node.tip.category && node.tip.category === other.tip.category;
+      if (sameCat) {
+        // Same category: attract gently to cluster
+        if (dist > 60) {
+          const attract = (dist - 60) / dist * 0.002;
+          node.vx -= dx * attract;
+          node.vy -= dy * attract;
+        }
+        // But still repel if too close
+        if (dist < 50) {
+          const force = (50 - dist) / dist * 0.02;
+          node.vx += dx * force;
+          node.vy += dy * force;
+        }
+      } else {
+        // Different category: repel more strongly to separate clusters
+        if (dist < 180) {
+          const force = (180 - dist) / dist * 0.012;
+          node.vx += dx * force;
+          node.vy += dy * force;
+          node.vz += dz * force * 0.2;
+        }
       }
     }
 
