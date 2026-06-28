@@ -35,6 +35,11 @@ export function createNode3D(id, tip, w, h, zScale = 1) {
     ringTilt,
     rotationOffset: Math.random() * Math.PI * 2,
     bands: Math.random() < 0.5,
+    floatSpeed: 0.006 + Math.random() * 0.012,
+    floatAmpX: 0.3 + Math.random() * 0.5,
+    floatAmpY: 0.2 + Math.random() * 0.4,
+    floatAmpZ: 0.15 + Math.random() * 0.3,
+    floatPhase: Math.random() * Math.PI * 2,
   };
 }
 
@@ -111,7 +116,7 @@ export function spawnExplosion(cx, cy, r, colorIdx) {
   return particles;
 }
 
-export function stepPhysics(nodes, edges, dragId, w, h) {
+export function stepPhysics(nodes, edges, dragId, w, h, time) {
   const cx = w / 2, cy = h / 2;
   const margin = 30;
 
@@ -171,6 +176,11 @@ export function stepPhysics(nodes, edges, dragId, w, h) {
       node.vx += dx * force;
       node.vy += dy * force;
     }
+
+    const ft = time * node.floatSpeed + node.floatPhase;
+    node.vx += Math.sin(ft) * node.floatAmpX * 0.04;
+    node.vy += Math.cos(ft * 0.7) * node.floatAmpY * 0.04;
+    node.vz += Math.sin(ft * 0.5 + 1.3) * node.floatAmpZ * 0.03;
 
     node.vx *= 0.95;
     node.vy *= 0.95;

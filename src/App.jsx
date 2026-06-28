@@ -109,7 +109,7 @@ export default function App() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const dragId = dragRef.current ? dragRef.current.id : null;
-      stepPhysics(nodesRef.current, edgesRef.current, dragId, w, h);
+      stepPhysics(nodesRef.current, edgesRef.current, dragId, w, h, timeRef.current);
       stepParticles(particlesRef.current);
 
       drawBackground(ctx, w, h, timeRef.current);
