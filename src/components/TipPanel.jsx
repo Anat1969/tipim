@@ -47,17 +47,20 @@ export default function TipPanel({ node, revealProgress }) {
           color: sc.text,
           letterSpacing: "0.05em",
         }}>
-          {tip.source === "A" ? "אנושי" : "AI"}
+          {tip.source === "A" ? "AI" : "אנושי"}
         </span>
       </div>
-      <p style={{
-        fontSize: 12,
-        lineHeight: 1.6,
-        color: "rgba(160,180,210,0.75)",
+      <blockquote style={{
+        fontSize: 18,
+        lineHeight: 1.7,
+        color: "rgba(200,215,240,0.9)",
         margin: 0,
+        padding: "8px 16px 8px 0",
+        borderRight: `3px solid ${sc.border}`,
+        fontStyle: "italic",
       }}>
-        {tip.text}
-      </p>
+        &#x201F;{tip.text}&#x201E;
+      </blockquote>
     </div>
   );
 }

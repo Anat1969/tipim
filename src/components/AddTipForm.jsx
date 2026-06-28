@@ -127,9 +127,9 @@ export default function AddTipForm({ onAdd, totalCount }) {
       }}>
         {totalCount} כוכבים ברשת
         <span style={{ margin: "0 8px", opacity: 0.4 }}>—</span>
-        <span style={{ color: "rgba(240,170,100,0.35)" }}>A</span> אנושי
+        <span style={{ color: "rgba(240,170,100,0.35)" }}>A</span> בינה מלאכותית
         <span style={{ margin: "0 4px", opacity: 0.3 }}>/</span>
-        <span style={{ color: "rgba(130,200,250,0.35)" }}>I</span> בינה מלאכותית
+        <span style={{ color: "rgba(130,200,250,0.35)" }}>I</span> אנושי
       </div>
     </div>
   );
