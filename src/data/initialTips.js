@@ -43,11 +43,11 @@ export const CATEGORIES = [
 ];
 
 export const CATEGORY_COLOR_MAP = {
-  "ליבה פילוסופית": 0,
-  "בשלות מקצועית": 1,
-  "מצבי עבודה": 3,
-  "פרומפטינג": 4,
-  "שיטת עבודה": 5,
+  "ליבה פילוסופית": 0,  // Red
+  "בשלות מקצועית": 1,   // Orange
+  "מצבי עבודה": 3,      // Green
+  "פרומפטינג": 4,       // Blue
+  "שיטת עבודה": 5,      // Indigo
 };
 
 export const INITIAL_TIPS = [];

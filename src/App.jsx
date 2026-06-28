@@ -16,6 +16,7 @@ import {
   drawNodes,
   drawParticles,
 } from "./utils/renderer";
+import { loadPersonalTips, savePersonalTip, clearPersonalTips } from "./utils/supabase";
 import Header from "./components/Header";
 import TipPanel from "./components/TipPanel";
 import AddTipForm from "./components/AddTipForm";
@@ -31,24 +32,16 @@ export default function App() {
   const dragRef = useRef(null);
   const timeRef = useRef(0);
 
-  const [personalTips, setPersonalTips] = useState(() => {
-    try {
-      const saved = localStorage.getItem("tipim-personal");
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
+  const [personalTips, setPersonalTips] = useState([]);
   const [presetTips, setPresetTips] = useState([]);
   const [selected, setSelected] = useState(null);
   const [revealProgress, setRevealProgress] = useState(0);
   const [dims, setDims] = useState({ w: 800, h: 520 });
   const [stats, setStats] = useState({ total: 0, revealed: 0 });
   const [presetsLoaded, setPresetsLoaded] = useState(false);
+  const supabaseLoaded = useRef(false);
 
   const allTips = [...presetTips, ...personalTips];
-
-  const savePersonal = useCallback((tips) => {
-    try { localStorage.setItem("tipim-personal", JSON.stringify(tips)); } catch {}
-  }, []);
 
   const init = useCallback((tipsList, w, h) => {
     nodesRef.current = tipsList.map((t, i) => createNode3D(i, t, w, h));
@@ -79,6 +72,21 @@ export default function App() {
     const { w, h } = measure();
     init(allTips, w, h);
     updateStats();
+
+    if (!supabaseLoaded.current) {
+      supabaseLoaded.current = true;
+      loadPersonalTips().then((tips) => {
+        if (tips && tips.length > 0) {
+          setPersonalTips(tips);
+          const { w: cw, h: ch } = measure();
+          const combined = [...presetTips, ...tips];
+          nodesRef.current = combined.map((t, i) => createNode3D(i, t, cw, ch));
+          edgesRef.current = buildEdges(nodesRef.current);
+          updateStats();
+        }
+      });
+    }
+
     const onResize = () => measure();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
@@ -233,7 +241,7 @@ export default function App() {
   const handleAddTip = (newTip) => {
     const updated = [...personalTips, newTip];
     setPersonalTips(updated);
-    savePersonal(updated);
+    savePersonalTip(newTip);
     addTipToScene(newTip);
     updateStats();
   };
@@ -272,9 +280,12 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
-  const handleLoad = (data) => {
+  const handleLoad = async (data) => {
     setPersonalTips(data);
-    savePersonal(data);
+    await clearPersonalTips();
+    for (const tip of data) {
+      await savePersonalTip(tip);
+    }
     const all = [...presetTips, ...data];
     init(all, dims.w, dims.h);
     setSelected(null);
@@ -291,7 +302,7 @@ export default function App() {
       dir="rtl"
       style={{
         fontFamily: "system-ui, sans-serif",
-        background: "#020408",
+        background: "#010210",
         minHeight: "100vh",
         color: "#c0cde0",
         padding: 0,

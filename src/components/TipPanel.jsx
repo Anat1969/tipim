@@ -1,6 +1,45 @@
+import { useRef, useState, useCallback, useEffect } from "react";
 import { SOURCE_COLORS } from "../utils/colors";
 
 export default function TipPanel({ node, revealProgress }) {
+  const panelRef = useRef(null);
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0, px: 0, py: 0 });
+
+  useEffect(() => {
+    setPos({ x: 0, y: 0 });
+  }, [node?.id]);
+
+  const onDown = useCallback((e) => {
+    e.stopPropagation();
+    const touch = e.touches ? e.touches[0] : e;
+    dragStart.current = { x: touch.clientX, y: touch.clientY, px: pos.x, py: pos.y };
+    setDragging(true);
+  }, [pos]);
+
+  useEffect(() => {
+    if (!dragging) return;
+    const onMove = (e) => {
+      const touch = e.touches ? e.touches[0] : e;
+      setPos({
+        x: dragStart.current.px + (touch.clientX - dragStart.current.x),
+        y: dragStart.current.py + (touch.clientY - dragStart.current.y),
+      });
+    };
+    const onUp = () => setDragging(false);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("touchmove", onMove);
+    window.addEventListener("touchend", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("touchend", onUp);
+    };
+  }, [dragging]);
+
   if (!node || !node.revealed) return null;
 
   const tip = node.tip;
@@ -8,22 +47,30 @@ export default function TipPanel({ node, revealProgress }) {
   const opacity = Math.min(1, revealProgress * 1.5);
 
   return (
-    <div style={{
-      position: "absolute",
-      bottom: 16,
-      left: "50%",
-      transform: `translateX(-50%) translateY(${(1 - revealProgress) * 12}px)`,
-      background: "rgba(8,12,22,0.88)",
-      border: "1px solid rgba(80,110,160,0.18)",
-      borderRadius: 12,
-      padding: "14px 20px",
-      maxWidth: 400,
-      minWidth: 220,
-      opacity,
-      transition: "opacity 0.3s, transform 0.3s",
-      backdropFilter: "blur(12px)",
-      direction: "rtl",
-    }}>
+    <div
+      ref={panelRef}
+      onMouseDown={onDown}
+      onTouchStart={onDown}
+      style={{
+        position: "absolute",
+        bottom: 16,
+        left: "50%",
+        transform: `translate(calc(-50% + ${pos.x}px), calc(${(1 - revealProgress) * 12}px + ${pos.y}px))`,
+        background: "rgba(8,12,22,0.88)",
+        border: "1px solid rgba(80,110,160,0.18)",
+        borderRadius: 12,
+        padding: "14px 20px",
+        maxWidth: 400,
+        minWidth: 220,
+        opacity,
+        transition: dragging ? "none" : "opacity 0.3s, transform 0.3s",
+        backdropFilter: "blur(12px)",
+        direction: "rtl",
+        cursor: dragging ? "grabbing" : "grab",
+        userSelect: "none",
+        zIndex: 10,
+      }}
+    >
       <div style={{
         display: "flex",
         justifyContent: "space-between",

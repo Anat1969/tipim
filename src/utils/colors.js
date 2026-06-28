@@ -1,20 +1,20 @@
-// Planet-inspired palette — each entry is [base, highlight, shadow, atmosphere]
+// Rainbow-ordered planet palette
 export const PLANET_PALETTES = [
-  { base: [60, 130, 200],  hi: [140, 200, 255], shadow: [20, 50, 90],   atmo: [80, 160, 240]  },  // Earth-like blue
-  { base: [180, 120, 60],  hi: [240, 190, 130], shadow: [90, 50, 20],   atmo: [200, 150, 80]  },  // Jupiter amber
-  { base: [160, 90, 50],   hi: [220, 160, 110], shadow: [80, 40, 15],   atmo: [190, 120, 70]  },  // Mars rust
-  { base: [70, 170, 160],  hi: [150, 230, 220], shadow: [25, 70, 65],   atmo: [90, 200, 190]  },  // Neptune teal
-  { base: [140, 80, 190],  hi: [200, 150, 240], shadow: [60, 30, 90],   atmo: [160, 100, 220] },  // Gas giant violet
-  { base: [190, 170, 130], hi: [240, 220, 180], shadow: [90, 75, 50],   atmo: [210, 190, 150] },  // Saturn gold
-  { base: [80, 140, 100],  hi: [150, 210, 170], shadow: [30, 60, 40],   atmo: [100, 170, 130] },  // Alien green
-  { base: [200, 80, 100],  hi: [250, 150, 170], shadow: [90, 30, 40],   atmo: [220, 100, 130] },  // Red dwarf
+  { base: [220, 50, 50],   hi: [255, 130, 130], shadow: [100, 20, 20],  atmo: [240, 80, 80]   },  // Red
+  { base: [230, 130, 40],  hi: [255, 190, 110], shadow: [110, 55, 15],  atmo: [240, 160, 60]  },  // Orange
+  { base: [220, 200, 50],  hi: [255, 240, 130], shadow: [100, 90, 15],  atmo: [240, 220, 80]  },  // Yellow
+  { base: [60, 180, 80],   hi: [140, 230, 150], shadow: [20, 80, 30],   atmo: [80, 210, 100]  },  // Green
+  { base: [50, 140, 220],  hi: [130, 200, 255], shadow: [15, 55, 110],  atmo: [70, 160, 240]  },  // Blue
+  { base: [100, 60, 200],  hi: [170, 130, 250], shadow: [40, 20, 100],  atmo: [130, 80, 230]  },  // Indigo
+  { base: [180, 60, 200],  hi: [230, 140, 250], shadow: [80, 20, 100],  atmo: [210, 80, 230]  },  // Violet
+  { base: [200, 80, 140],  hi: [250, 150, 200], shadow: [90, 30, 60],   atmo: [220, 100, 170] },  // Pink
 ];
 
 export const NEBULA_COLORS = PLANET_PALETTES.map(p => p.base);
 
 export const SOURCE_COLORS = {
-  A: { bg: "rgba(220,130,70,0.15)", border: "rgba(220,130,70,0.35)", text: "rgba(240,170,100,0.9)" },
-  I: { bg: "rgba(80,160,220,0.15)", border: "rgba(80,160,220,0.35)", text: "rgba(130,200,250,0.9)" },
+  A: { bg: "rgba(230,130,40,0.15)", border: "rgba(230,130,40,0.35)", text: "rgba(250,170,80,0.9)" },
+  I: { bg: "rgba(50,140,220,0.15)", border: "rgba(50,140,220,0.35)", text: "rgba(130,200,255,0.9)" },
 };
 
 export function nebulaRGB(i) {
