@@ -1,19 +1,18 @@
 import { PLANET_PALETTES } from "./colors";
 import { CATEGORY_COLOR_MAP, CATEGORIES } from "../data/initialTips";
-
-function catHash(str) {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) h = ((h << 5) - h + str.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
+import { getCategoryColorIdx } from "./categoryColors";
 
 export function createNode3D(id, tip, w, h, zScale = 1) {
   const cat = tip.category || tip.topic || "";
-  const catIdx = CATEGORIES.indexOf(cat);
-  const knownCat = catIdx >= 0;
-  const catAngle = knownCat
-    ? (catIdx / CATEGORIES.length) * Math.PI * 2 - Math.PI / 2
-    : (catHash(cat) % 12) / 12 * Math.PI * 2 - Math.PI / 2;
+  const colorIdx = getCategoryColorIdx(cat);
+  const allCats = getCategoryColorIdx._registry
+    ? Object.keys(getCategoryColorIdx._registry)
+    : CATEGORIES;
+  const catOrder = allCats.indexOf(cat);
+  const totalCats = Math.max(allCats.length, 1);
+  const catAngle = catOrder >= 0
+    ? (catOrder / totalCats) * Math.PI * 2 - Math.PI / 2
+    : 0;
   const clusterSpread = Math.min(w, h) * 0.12;
   const clusterDist = Math.min(w, h) * 0.2;
   const cx = w / 2 + Math.cos(catAngle) * clusterDist;
@@ -22,7 +21,6 @@ export function createNode3D(id, tip, w, h, zScale = 1) {
   const radius = 10 + Math.random() * clusterSpread;
   const hasRing = Math.random() < 0.25;
   const ringTilt = 0.3 + Math.random() * 0.4;
-  const colorIdx = CATEGORY_COLOR_MAP[cat] ?? (catHash(cat) % PLANET_PALETTES.length);
   return {
     id,
     tip,
