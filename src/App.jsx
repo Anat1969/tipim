@@ -64,7 +64,7 @@ export default function App() {
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
         const w = rect.width;
-        const h = Math.max(420, Math.min(620, window.innerHeight * 0.58));
+        const h = window.innerHeight;
         setDims({ w, h });
         return { w, h };
       }
@@ -287,49 +287,68 @@ export default function App() {
       style={{
         fontFamily: "system-ui, sans-serif",
         background: "#010210",
-        minHeight: "100vh",
         color: "#c0cde0",
         padding: 0,
         margin: 0,
+        width: "100vw",
+        height: "100vh",
+        overflow: "hidden",
+        position: "relative",
       }}
     >
-      <Header
-        stats={stats}
-        onReset={handleReset}
+      <canvas
+        ref={canvasRef}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          display: "block",
+          cursor: "pointer",
+        }}
+        onMouseDown={onDown}
+        onMouseMove={onMove}
+        onMouseUp={onUp}
+        onMouseLeave={onUp}
+        onTouchStart={onDown}
+        onTouchMove={onMove}
+        onTouchEnd={onUp}
       />
 
-      <div style={{ maxWidth: 920, margin: "0 auto", padding: "0 12px", position: "relative" }}>
-        <div style={{
-          borderRadius: 14,
-          overflow: "hidden",
-          border: "1px solid rgba(80,110,160,0.12)",
-          position: "relative",
-        }}>
-          <canvas
-            ref={canvasRef}
-            style={{ display: "block", cursor: "pointer", width: "100%", height: dims.h }}
-            onMouseDown={onDown}
-            onMouseMove={onMove}
-            onMouseUp={onUp}
-            onMouseLeave={onUp}
-            onTouchStart={onDown}
-            onTouchMove={onMove}
-            onTouchEnd={onUp}
+      <div style={{ position: "relative", zIndex: 1, pointerEvents: "none" }}>
+        <div style={{ pointerEvents: "auto" }}>
+          <Header
+            stats={stats}
+            onReset={handleReset}
           />
-          <TipPanel node={selectedNode} revealProgress={revealProgress} />
+        </div>
+
+        <TipPanel node={selectedNode} revealProgress={revealProgress} />
+
+        <div style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          pointerEvents: "auto",
+          background: "linear-gradient(to top, rgba(1,2,16,0.95) 60%, rgba(1,2,16,0) 100%)",
+          paddingTop: 30,
+          maxHeight: "50vh",
+          overflowY: "auto",
+        }}>
+          <AddTipForm
+            onAdd={handleAddTip}
+            onAddPreset={handleAddPresetTip}
+            onLoadPresets={handleLoadPresets}
+            totalCount={stats.total}
+            presetsLoaded={presetsLoaded}
+            activeMode={viewMode}
+            onModeChange={handleModeChange}
+            personalTips={personalTips}
+          />
         </div>
       </div>
-
-      <AddTipForm
-        onAdd={handleAddTip}
-        onAddPreset={handleAddPresetTip}
-        onLoadPresets={handleLoadPresets}
-        totalCount={stats.total}
-        presetsLoaded={presetsLoaded}
-        activeMode={viewMode}
-        onModeChange={handleModeChange}
-        personalTips={personalTips}
-      />
     </div>
   );
 }
