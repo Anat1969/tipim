@@ -349,6 +349,12 @@ function PresetPanel({ onAdd, onLoadAll, presetsLoaded }) {
   );
 }
 
+function catHash(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
 function PersonalTipsList({ tips }) {
   const grouped = {};
   for (const tip of tips) {
@@ -362,8 +368,8 @@ function PersonalTipsList({ tips }) {
   return (
     <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
       {categories.map((cat) => {
-        const palIdx = CATEGORY_COLOR_MAP[cat];
-        const pal = palIdx !== undefined ? PLANET_PALETTES[palIdx] : PLANET_PALETTES[2];
+        const palIdx = CATEGORY_COLOR_MAP[cat] ?? (catHash(cat) % PLANET_PALETTES.length);
+        const pal = PLANET_PALETTES[palIdx];
         const catColor = `rgba(${pal.base[0]},${pal.base[1]},${pal.base[2]}`;
         return (
           <div key={cat} style={{
