@@ -13,12 +13,10 @@ export function createNode3D(id, tip, w, h, zScale = 1) {
   const catAngle = catOrder >= 0
     ? (catOrder / totalCats) * Math.PI * 2 - Math.PI / 2
     : 0;
-  const clusterSpread = Math.min(w, h) * 0.08;
-  const clusterDist = Math.min(w, h) * 0.13;
-  const cx = w / 2 + Math.cos(catAngle) * clusterDist;
-  const cy = h / 2 + Math.sin(catAngle) * clusterDist;
+  const cx = w / 2 + Math.cos(catAngle) * 40;
+  const cy = h / 2 + Math.sin(catAngle) * 30;
   const angle = Math.random() * Math.PI * 2;
-  const radius = 8 + Math.random() * clusterSpread;
+  const radius = 5 + Math.random() * 25;
   const hasRing = Math.random() < 0.25;
   const ringTilt = 0.3 + Math.random() * 0.4;
   return {
@@ -26,7 +24,7 @@ export function createNode3D(id, tip, w, h, zScale = 1) {
     tip,
     x: cx + Math.cos(angle) * radius,
     y: cy + Math.sin(angle) * radius,
-    z: (Math.random() - 0.5) * 200 * zScale,
+    z: (Math.random() - 0.5) * 100 * zScale,
     vx: 0,
     vy: 0,
     vz: 0,
@@ -135,9 +133,9 @@ export function stepPhysics(nodes, edges, dragId, w, h, time) {
     }
     if (node.id === dragId) continue;
 
-    node.vx += (cx - node.x) * 0.002;
-    node.vy += (cy - node.y) * 0.002;
-    node.vz += (0 - node.z) * 0.0012;
+    node.vx += (cx - node.x) * 0.004;
+    node.vy += (cy - node.y) * 0.004;
+    node.vz += (0 - node.z) * 0.003;
 
     for (const other of nodes) {
       if (other.id === node.id || other.dying) continue;
@@ -177,8 +175,8 @@ export function stepPhysics(nodes, edges, dragId, w, h, time) {
       const dx = other.x - node.x;
       const dy = other.y - node.y;
       const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-      const target = 110;
-      const force = (dist - target) / dist * 0.003;
+      const target = 70;
+      const force = (dist - target) / dist * 0.002;
       node.vx += dx * force;
       node.vy += dy * force;
     }
@@ -196,13 +194,19 @@ export function stepPhysics(nodes, edges, dragId, w, h, time) {
     node.y += node.vy;
     node.z += node.vz;
 
-    const mx = 50, my = 50;
-    if (node.x < mx) { node.x = mx; node.vx *= -0.3; }
-    if (node.x > w - mx) { node.x = w - mx; node.vx *= -0.3; }
-    if (node.y < my) { node.y = my; node.vy *= -0.3; }
-    if (node.y > h - my) { node.y = h - my; node.vy *= -0.3; }
-    if (node.z < -200) { node.z = -200; node.vz *= -0.3; }
-    if (node.z > 200) { node.z = 200; node.vz *= -0.3; }
+    const padX = w * 0.15, padY = h * 0.15;
+    if (node.x < padX) node.vx += (padX - node.x) * 0.01;
+    if (node.x > w - padX) node.vx -= (node.x - (w - padX)) * 0.01;
+    if (node.y < padY) node.vy += (padY - node.y) * 0.01;
+    if (node.y > h - padY) node.vy -= (node.y - (h - padY)) * 0.01;
+
+    const hard = 20;
+    if (node.x < hard) { node.x = hard; node.vx *= -0.3; }
+    if (node.x > w - hard) { node.x = w - hard; node.vx *= -0.3; }
+    if (node.y < hard) { node.y = hard; node.vy *= -0.3; }
+    if (node.y > h - hard) { node.y = h - hard; node.vy *= -0.3; }
+    if (node.z < -150) { node.z = -150; node.vz *= -0.3; }
+    if (node.z > 150) { node.z = 150; node.vz *= -0.3; }
 
     if (node.isPulsing) {
       node.pulsePhase += 0.05;
