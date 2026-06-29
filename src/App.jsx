@@ -316,6 +316,8 @@ export default function App() {
         onTouchEnd={onUp}
       />
 
+      <TipPanel node={selectedNode} revealProgress={revealProgress} />
+
       <div style={{ position: "relative", zIndex: 1, pointerEvents: "none" }}>
         <div style={{ pointerEvents: "auto" }}>
           <Header
@@ -323,8 +325,6 @@ export default function App() {
             onReset={handleReset}
           />
         </div>
-
-        <TipPanel node={selectedNode} revealProgress={revealProgress} />
 
         <div style={{
           position: "fixed",

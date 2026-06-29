@@ -52,10 +52,10 @@ export default function TipPanel({ node, revealProgress }) {
       onMouseDown={onDown}
       onTouchStart={onDown}
       style={{
-        position: "absolute",
-        bottom: 16,
+        position: "fixed",
+        top: "50%",
         left: "50%",
-        transform: `translate(calc(-50% + ${pos.x}px), calc(${(1 - revealProgress) * 12}px + ${pos.y}px))`,
+        transform: `translate(calc(-50% + ${pos.x}px), calc(-50% + ${(1 - revealProgress) * 12}px + ${pos.y}px))`,
         background: "rgba(8,12,22,0.88)",
         border: "1px solid rgba(80,110,160,0.18)",
         borderRadius: 12,
