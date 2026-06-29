@@ -13,12 +13,12 @@ export function createNode3D(id, tip, w, h, zScale = 1) {
   const catAngle = catOrder >= 0
     ? (catOrder / totalCats) * Math.PI * 2 - Math.PI / 2
     : 0;
-  const clusterSpread = Math.min(w, h) * 0.12;
-  const clusterDist = Math.min(w, h) * 0.2;
+  const clusterSpread = Math.min(w, h) * 0.08;
+  const clusterDist = Math.min(w, h) * 0.13;
   const cx = w / 2 + Math.cos(catAngle) * clusterDist;
   const cy = h / 2 + Math.sin(catAngle) * clusterDist;
   const angle = Math.random() * Math.PI * 2;
-  const radius = 10 + Math.random() * clusterSpread;
+  const radius = 8 + Math.random() * clusterSpread;
   const hasRing = Math.random() < 0.25;
   const ringTilt = 0.3 + Math.random() * 0.4;
   return {
@@ -135,9 +135,9 @@ export function stepPhysics(nodes, edges, dragId, w, h, time) {
     }
     if (node.id === dragId) continue;
 
-    node.vx += (cx - node.x) * 0.0006;
-    node.vy += (cy - node.y) * 0.0006;
-    node.vz += (0 - node.z) * 0.0008;
+    node.vx += (cx - node.x) * 0.002;
+    node.vy += (cy - node.y) * 0.002;
+    node.vz += (0 - node.z) * 0.0012;
 
     for (const other of nodes) {
       if (other.id === node.id || other.dying) continue;
@@ -160,12 +160,12 @@ export function stepPhysics(nodes, edges, dragId, w, h, time) {
           node.vy += dy * force;
         }
       } else {
-        // Different category: repel more strongly to separate clusters
-        if (dist < 180) {
-          const force = (180 - dist) / dist * 0.012;
+        // Different category: repel to separate clusters
+        if (dist < 120) {
+          const force = (120 - dist) / dist * 0.008;
           node.vx += dx * force;
           node.vy += dy * force;
-          node.vz += dz * force * 0.2;
+          node.vz += dz * force * 0.15;
         }
       }
     }
@@ -196,12 +196,13 @@ export function stepPhysics(nodes, edges, dragId, w, h, time) {
     node.y += node.vy;
     node.z += node.vz;
 
-    if (node.x < margin) { node.x = margin; node.vx *= -0.3; }
-    if (node.x > w - margin) { node.x = w - margin; node.vx *= -0.3; }
-    if (node.y < margin) { node.y = margin; node.vy *= -0.3; }
-    if (node.y > h - margin) { node.y = h - margin; node.vy *= -0.3; }
-    if (node.z < -250) { node.z = -250; node.vz *= -0.3; }
-    if (node.z > 250) { node.z = 250; node.vz *= -0.3; }
+    const mx = 50, my = 50;
+    if (node.x < mx) { node.x = mx; node.vx *= -0.3; }
+    if (node.x > w - mx) { node.x = w - mx; node.vx *= -0.3; }
+    if (node.y < my) { node.y = my; node.vy *= -0.3; }
+    if (node.y > h - my) { node.y = h - my; node.vy *= -0.3; }
+    if (node.z < -200) { node.z = -200; node.vz *= -0.3; }
+    if (node.z > 200) { node.z = 200; node.vz *= -0.3; }
 
     if (node.isPulsing) {
       node.pulsePhase += 0.05;
