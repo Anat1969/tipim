@@ -13,8 +13,9 @@ export function createNode3D(id, tip, w, h, zScale = 1) {
   const catAngle = catOrder >= 0
     ? (catOrder / totalCats) * Math.PI * 2 - Math.PI / 2
     : 0;
-  const cx = w / 2 + Math.cos(catAngle) * 40;
-  const cy = h / 2 + Math.sin(catAngle) * 30;
+  const spread = Math.min(w, h) * 0.18;
+  const cx = w / 2 + Math.cos(catAngle) * spread;
+  const cy = h / 2 + Math.sin(catAngle) * spread * 0.7;
   const angle = Math.random() * Math.PI * 2;
   const radius = 5 + Math.random() * 25;
   const hasRing = Math.random() < 0.25;
@@ -133,9 +134,9 @@ export function stepPhysics(nodes, edges, dragId, w, h, time) {
     }
     if (node.id === dragId) continue;
 
-    node.vx += (cx - node.x) * 0.004;
-    node.vy += (cy - node.y) * 0.004;
-    node.vz += (0 - node.z) * 0.003;
+    node.vx += (cx - node.x) * 0.0015;
+    node.vy += (cy - node.y) * 0.0015;
+    node.vz += (0 - node.z) * 0.002;
 
     for (const other of nodes) {
       if (other.id === node.id || other.dying) continue;
@@ -159,11 +160,11 @@ export function stepPhysics(nodes, edges, dragId, w, h, time) {
         }
       } else {
         // Different category: repel to separate clusters
-        if (dist < 120) {
-          const force = (120 - dist) / dist * 0.008;
+        if (dist < 250) {
+          const force = (250 - dist) / dist * 0.015;
           node.vx += dx * force;
           node.vy += dy * force;
-          node.vz += dz * force * 0.15;
+          node.vz += dz * force * 0.1;
         }
       }
     }
@@ -194,11 +195,11 @@ export function stepPhysics(nodes, edges, dragId, w, h, time) {
     node.y += node.vy;
     node.z += node.vz;
 
-    const padX = w * 0.15, padY = h * 0.15;
+    const padX = w * 0.08, padTop = h * 0.1, padBot = h * 0.45;
     if (node.x < padX) node.vx += (padX - node.x) * 0.01;
     if (node.x > w - padX) node.vx -= (node.x - (w - padX)) * 0.01;
-    if (node.y < padY) node.vy += (padY - node.y) * 0.01;
-    if (node.y > h - padY) node.vy -= (node.y - (h - padY)) * 0.01;
+    if (node.y < padTop) node.vy += (padTop - node.y) * 0.01;
+    if (node.y > h - padBot) node.vy -= (node.y - (h - padBot)) * 0.01;
 
     const hard = 20;
     if (node.x < hard) { node.x = hard; node.vx *= -0.3; }
