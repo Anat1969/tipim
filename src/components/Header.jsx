@@ -50,23 +50,12 @@ export default function Header({ stats, onReset }) {
         </p>
       </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <a
-          href="https://claude.ai/code/session_01AVn5pdqL4PojzRwRkaQpKJ"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            ...btnStyle,
-            borderColor: "rgba(130,100,220,0.25)",
-            color: "rgba(170,150,240,0.8)",
-          }}
-        >
-          Claude ✦
-        </a>
         <button onClick={onReset} style={{
           ...btnStyle,
           borderColor: "rgba(100,200,180,0.25)",
           color: "rgba(100,200,180,0.7)",
         }}>אפס</button>
+        <ai-menu chat="https://claude.ai/code/session_01AVn5pdqL4PojzRwRkaQpKJ" />
       </div>
     </div>
   );
